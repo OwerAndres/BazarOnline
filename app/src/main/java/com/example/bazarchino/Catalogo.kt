@@ -69,6 +69,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.bazarchino.Product
 import com.example.bazarchino.getProductFromJson
+import coil.compose.AsyncImage
 
 
 
@@ -92,8 +93,8 @@ class Catalogo : ComponentActivity() {
 }
 
 
-//Componente el cual accedera a la funcion de getProductFRomJson, y mostrara los atributos de los objetos
-//dentro del array de productos
+/**Componente el cual accedera a la funcion de getProductFRomJson, y mostrara los atributos de los objetos
+dentro del array de productos**/
 @Composable
 fun ProductDetails() {
     val context = LocalContext.current
@@ -116,6 +117,11 @@ fun ProductDetails() {
             Text(text = "Loading...")
         }
     }
+}
+
+@Composable
+fun viewproducts(){
+
 }
 
 @Composable
