@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -45,6 +46,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.Navigation
 import kotlin.math.sin
 
 class MainActivity : ComponentActivity() {
@@ -52,47 +55,51 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            BazarChinoTheme {
-                inicio()
-            }
+           appNavigation()
         }
     }
 }
 
+@Composable
+fun MainScreen(navController: NavController){
+ inicio(navController)
+}
+
 //Imagen
 @Composable
-fun imgLogo(size: Int,padding: Int){
+fun imgLogo(size: Int,padding: Int,onClick: () -> Unit){
 
     Image(painterResource(id = R.drawable.cochebazar),
         "logo del bazar",
         modifier = Modifier
             .size(size.dp)
             .wrapContentSize(Alignment.Center)
-            .padding(start = padding.dp),
+            .padding(start = padding.dp)
+            .clickable { onClick() },
         contentScale = ContentScale.Crop,)
 }
 
 //input del buscador
 @Composable
-fun Buscador(padding: Int,circleRadius: Int) {
-    var text by remember { mutableStateOf("") }
+fun Buscador(padding: Int, circleRadius: Int, text: String, onTextChanged: (String) -> Unit) {
+    Spacer(modifier = Modifier.padding(padding.dp))
 
-        Spacer(modifier = Modifier.padding(padding.dp))
-        TextField(modifier = Modifier
+    TextField(
+        modifier = Modifier
             .clip(RoundedCornerShape(circleRadius.dp)),
-            value = text,
-            onValueChange = { text = it },
-            placeholder = { Text("Laptos, Smarphones, ...")},
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color.LightGray,
-                unfocusedContainerColor = Color.LightGray,
-                disabledContainerColor = Color.LightGray,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent
-            ),
-            singleLine = true
-        )
+        value = text,
+        onValueChange = { onTextChanged(it) }, // Llamar al callback para actualizar el texto
+        placeholder = { Text("Laptops, Smartphones, ...") },
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = Color.LightGray,
+            unfocusedContainerColor = Color.LightGray,
+            disabledContainerColor = Color.LightGray,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent
+        ),
+        singleLine = true
+    )
 }
 
 //Titulo del buscador
@@ -109,32 +116,38 @@ fun TextoTitle(text: String){
 
 //Boton buscar
 @Composable
-fun buscarButton(){
-    Button(onClick = { /*TODO*/ },
+fun buscarButton(navController: NavController, text: String) {
+    Button(onClick = {
+        if (text.isNotBlank()) {
+            navController.navigate("catalogo/$text") // Si el texto no está vacío, pasamos el texto como parámetro
+        } else {
+            navController.navigate("catalogo") // Si está vacío, navegamos sin parámetros
+        }
+    },
         modifier = Modifier
             .width(230.dp)
             .height(35.dp)
             .padding(start = 60.dp)
-            .shadow(10.dp,shape = MaterialTheme.shapes.medium),
-        colors = ButtonDefaults.buttonColors(Color(0xFF000000))
-    ){
-
+            .shadow(10.dp, shape = MaterialTheme.shapes.medium),
+        colors = ButtonDefaults.buttonColors(Color(0xFF000000))) {
         Text(text = "Buscar")
-
     }
 }
 
 @Composable
-fun inicio(){
+fun inicio(navController: NavController){
+    var text by remember { mutableStateOf("") }
     Column(modifier = Modifier
         .fillMaxSize()
         .wrapContentSize(Alignment.Center)) {
 
-        imgLogo(200,60)
-        TextoTitle("Bazar chino")
-        Buscador(10,10)
+        imgLogo(200,60){
+            navController.navigate("main")
+        }
+        TextoTitle("Bazar online")
+        Buscador(padding = 10, circleRadius = 10, text = text, onTextChanged = { text = it })
         Spacer(modifier = Modifier.padding(10.dp))
-        buscarButton()
+        buscarButton(navController = navController, text = text)
 
     }
 }
@@ -142,5 +155,5 @@ fun inicio(){
 @Preview(showSystemUi = true)
 @Composable
 fun preview() {
-    inicio()
+    appNavigation()
 }
