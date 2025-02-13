@@ -29,6 +29,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.res.painterResource
 import coil.compose.AsyncImage
 import android.util.Log
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
@@ -42,9 +44,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavController
 
+/**
+ * Función composable que define el encabezado (header) de la aplicación.
+ * Este encabezado contiene un logo, una barra de búsqueda y un texto informativo.
+ *
+ * @param text El texto actual que se muestra o se usa en la barra de búsqueda.
+ * @param onTextChanged Un callback que se invoca cuando el texto en la barra de búsqueda cambia.
+ * @param navController El NavController utilizado para la navegación entre pantallas.
+ */
 @Composable
 fun Header(text: String, onTextChanged: (String) -> Unit,navController: NavController){
-    Column {
+    Column(modifier = Modifier.padding(top = 20.dp)) {
         Row(modifier = Modifier.padding(top = 30.dp).padding(start = 10.dp)){
 
             imgLogo(60,0){
@@ -69,21 +79,22 @@ fun textInfo(text: String){
 }
 
 @Composable
-fun productImage(imagenURL: String, description: String){
+fun productImage(size: Int,round: Int,imagenURL: String, description: String, onClick: () -> Unit){
    AsyncImage(
        model = imagenURL,
        contentDescription = description,
        modifier = Modifier
-           .size(80.dp)
-           .clip(RoundedCornerShape(50.dp))
+           .size(size.dp)
+           .clip(RoundedCornerShape(round.dp))
+           .clickable { onClick() }
    )
 }
 
 @Composable
-fun textProduct(text: String, size:Int,){
+fun textProduct(text: String, size:Int,paddingStart: Int){
     Text(text = text,
         modifier = Modifier
-            .padding(start = 10.dp),
+            .padding(start = paddingStart.dp),
         style = TextStyle(
             fontSize = size.sp,
             fontWeight = FontWeight.Bold
@@ -141,54 +152,90 @@ fun catalogoScreen(searchQuery: String?,navController: NavController) {
         }
 
         // Aquí se muestran los productos
-        ProductDetails(searchQuery = query.value)
+        ProductDetails(searchQuery = query.value,navController)
     }
 }
 
 @Composable
-fun filtroProductos(products: List<Product>, param: String): List<Product>{
-    //Convertiremos el paremetro de busqueda en misnusculas para evitar posibles errores
-    val busqueda = param.trim().lowercase()
-
-    return if (param.isBlank()) {
-        products
-    }else{
-        products.filter { product ->
-
-            product.title?.lowercase()?.contains(busqueda) ?: false ||
-                    product.category?.lowercase()?.contains(busqueda) ?: false ||
-                    product.brand?.lowercase()?.contains(busqueda) ?: false
-
+        /**
+         * Función que filtra una lista de productos en función de un parámetro de búsqueda.
+         *
+         * @param products La lista de productos a filtrar.
+         * @param param El parámetro de búsqueda. Puede ser el título, la categoría o la marca del producto.
+         * @return Una nueva lista de productos que coinciden con el parámetro de búsqueda.
+         *         Si el parámetro de búsqueda está vacío, devuelve la lista completa de productos.
+         */
+fun filtroProductos(products: List<Product>, param: String? = null, productId: String? = null): List<Product> {
+    return when {
+        productId != null -> products.filter { product -> product.id == productId.toInt()}
+        !param.isNullOrBlank() -> {
+            val busqueda = param.trim().lowercase()
+            products.filter { product ->
+                product.title?.lowercase()?.contains(busqueda) ?: false ||
+                        product.category?.lowercase()?.contains(busqueda) ?: false ||
+                        product.brand?.lowercase()?.contains(busqueda) ?: false
+            }
         }
+        else -> products
     }
 }
+
 
 /**Componente el cual accedera a la funcion de getProductFRomJson, y mostrara los atributos de los objetos
 dentro del array de productos**/
+/**
+ * Función composable que muestra los detalles de los productos.
+ * Permite filtrar los productos en función de una consulta de búsqueda.
+ *
+ * @param searchQuery La consulta de búsqueda para filtrar los productos.
+ *                    Si está vacía, se muestran todos los productos.
+ */
 @Composable
-fun ProductDetails(searchQuery: String = "") {
+fun ProductDetails(searchQuery: String = "", navController: NavController) {
+    // Obtiene el contexto actual de la aplicación
     val context = LocalContext.current
+
+    // Variable de estado para almacenar la lista de productos. Inicialmente es nula.
     var products by remember { mutableStateOf<List<Product>?>(null) }
 
+    // Efecto secundario que se ejecuta una sola vez al iniciar el composable.
     LaunchedEffect(key1 = true) {
+        // Carga los productos desde el archivo JSON.
         products = getProductFromJson(context, "products.json")
     }
 
+    // Columna principal que contiene la lista de productos.
     Column(modifier = Modifier.padding(16.dp)) {
+        // Comprueba si la lista de productos no es nula.
         if (products != null) {
-            //llamo la funcion del filtro
-            val filtro = filtroProductos(products!!,searchQuery)
+            // Llama a la función de filtro para obtener los productos filtrados.
+            val filtro = filtroProductos(products!!, searchQuery)
+
+            // Comprueba si la lista de productos filtrados no está vacía.
             if (filtro.isNotEmpty()) {
+                // Itera sobre cada producto en la lista filtrada.
                 filtro.forEach { product ->
+                    // Columna para cada producto.
                     Column {
+                        // Espacio vertical entre productos.
                         Spacer(modifier = Modifier.padding(10.dp))
+                        // Fila que contiene la imagen y la información del producto.
                         Row {
-                            productImage(product.thumbnail, product.title)
+                            // Muestra la imagen del producto.
+                            productImage(80,50,product.thumbnail, product.title){
+                                navController.navigate("productView/${product.id}")
+                            }
+                            // Columna para la información del producto.
                             Column {
-                                textProduct(product.title, 19)
+                                // Muestra el título del producto.
+                                textProduct(product.title, 19,10)
+                                // Muestra la descripción del producto.
                                 textDescription(product.description, 10)
+                                // Fila para el precio y la calificación del producto.
                                 Row {
-                                    textProduct("${product.price}€", 19)
+                                    // Muestra el precio del producto.
+                                    textProduct("${product.price}€", 19,10)
+                                    // Muestra la calificación del producto.
                                     StarRating(product.rating.toDouble())
                                 }
                             }
@@ -196,9 +243,11 @@ fun ProductDetails(searchQuery: String = "") {
                     }
                 }
             } else {
+                // Muestra un mensaje si no se encontraron productos.
                 Text(text = "No se encontraron productos.")
             }
         } else {
+            // Muestra un mensaje de carga mientras se cargan los productos.
             Text(text = "Loading...")
         }
     }
@@ -209,7 +258,7 @@ fun ProductDetails(searchQuery: String = "") {
 
 /*
 @Preview(showSystemUi = true)
-@Composable
+@Composable-
 fun previw(){
     val scrollState = rememberScrollState()
     Column(modifier = Modifier.verticalScroll(scrollState)) {
