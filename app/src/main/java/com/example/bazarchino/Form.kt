@@ -35,19 +35,19 @@ import com.example.bazarchino.ApiResponse
 @Composable
 fun BoxTextForm(
     placeholder: String,
-    padding: Int,
-    paddingStar: Int,
-    circleRadius: Int
+    circleRadius: Int,
+    onTextChanged: (String) -> Unit // Agregamos esta función
 ) {
     var text by remember { mutableStateOf("") }
-
-    Spacer(modifier = androidx.compose.ui.Modifier.padding(padding.dp).padding(start = paddingStar.dp))
 
     TextField(
         modifier = androidx.compose.ui.Modifier
             .clip(RoundedCornerShape(circleRadius.dp)),
         value = text,
-        onValueChange = { text = it }, // Ahora el texto se actualiza correctamente
+        onValueChange = {
+            text = it
+            onTextChanged(it) // Notificamos al estado padre el nuevo valor
+        },
         placeholder = { Text(placeholder) },
         colors = TextFieldDefaults.colors(
             focusedContainerColor = Color.LightGray,
@@ -64,20 +64,21 @@ fun BoxTextForm(
 
 
 @Composable
-fun buttonEnviar(width: Int, height: Int, padding: Int) {
+fun buttonEnviar(width: Int, height: Int, padding: Int,nombre:String,apellido:String,correo:String,
+                 direccion:String,dni:String,producto:String,precio:String,descripcion:String) {
     val context = LocalContext.current // Obtener el contexto actual
 
     Button(
         onClick = {
             // Aquí obtienes los valores de los campos de entrada
-            val nombre = "Juan" // Cambia estos valores con los datos de los campos de texto
-            val apellido = "Perez"
-            val correo = "owerandres611@gmail.com"
-            val direccion = "Calle Falsa 123"
-            val dni = "12345678"
-            val producto = "Producto A"
-            val precio = "10.99"
-            val descripcion = "Descripcion del producto A"
+            val nombre = nombre // Cambia estos valores con los datos de los campos de texto
+            val apellido = apellido
+            val correo = correo
+            val direccion = direccion
+            val dni = dni
+            val producto = producto
+            val precio = precio
+            val descripcion = descripcion
 
             // Crear el objeto FormData
             val formData = FormData(nombre, apellido, correo, direccion, dni, producto, precio, descripcion)
@@ -116,6 +117,13 @@ fun buttonEnviar(width: Int, height: Int, padding: Int) {
 
 @Composable
 fun Datos(title: String, price: String, description: String, navController: NavController) {
+    // Variables de estado para cada campo del formulario
+    var nombre by remember { mutableStateOf("") }
+    var apellido by remember { mutableStateOf("") }
+    var correo by remember { mutableStateOf("") }
+    var direccion by remember { mutableStateOf("") }
+    var dni by remember { mutableStateOf("") }
+
     Column {
         Spacer(modifier = androidx.compose.ui.Modifier.padding(top = 20.dp))
         Row(modifier = androidx.compose.ui.Modifier.padding(top = 20.dp).padding(start = 140.dp)) {
@@ -127,18 +135,22 @@ fun Datos(title: String, price: String, description: String, navController: NavC
                 Text("Precio: $price €")
 
                 Spacer(modifier = androidx.compose.ui.Modifier.padding(10.dp))
-                BoxTextForm("Nombre", 0, 0, 10)
+                BoxTextForm("Nombre", 10) { nombre = it }
                 Spacer(modifier = androidx.compose.ui.Modifier.padding(10.dp))
-                BoxTextForm("Apellido", 0, 0, 10)
+                BoxTextForm("Apellido", 10) { apellido = it }
                 Spacer(modifier = androidx.compose.ui.Modifier.padding(10.dp))
-                BoxTextForm("Correo", 0, 0, 10)
+                BoxTextForm("Correo", 10) { correo = it }
                 Spacer(modifier = androidx.compose.ui.Modifier.padding(10.dp))
-                BoxTextForm("Dirección", 0, 0, 10)
+                BoxTextForm("Dirección", 10) { direccion = it }
                 Spacer(modifier = androidx.compose.ui.Modifier.padding(10.dp))
-                BoxTextForm("DNI", 0, 0, 10)
+                BoxTextForm("DNI", 10) { dni = it }
             }
         }
         Spacer(modifier = androidx.compose.ui.Modifier.padding(30.dp))
-        buttonEnviar(330, 35, 70)
+
+        // Botón de compra con los datos reales del formulario
+        buttonEnviar(330, 35, 70, nombre, apellido, correo, direccion, dni, title, price, description)
     }
 }
+
+

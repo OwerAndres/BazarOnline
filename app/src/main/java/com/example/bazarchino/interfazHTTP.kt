@@ -6,6 +6,6 @@ import retrofit2.http.POST
 
 
 interface ApiService {
-    @POST("Ower/Android.php") // Aquí pones la ruta relativa en tu servidor XAMPP
+    @POST("Android.php") // Aquí pones la ruta relativa en tu servidor
     fun sendFormData(@Body formData: FormData): Call<ApiResponse>
 }
